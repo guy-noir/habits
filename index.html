@@ -1,2203 +1,295 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Weekly Habit Tracker</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --ink: #1e2027;
-      --muted: #5e6272;
-      --bg: #f6f3ee;
-      --card: #fffaf3;
-      --accent: #e07a5f;
-      --accent-2: #3d405b;
-      --ring: #f2cc8f;
-      --good: #4a7c59;
-      --bad: #b54b3b;
-      --normal: #6b6e7a;
-      --shadow: 0 10px 30px rgba(30,32,39,0.12);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: "Space Grotesk", system-ui, sans-serif;
-      color: var(--ink);
-      background: radial-gradient(circle at top left, #f2cc8f20 0%, transparent 55%),
-                  radial-gradient(circle at 80% 20%, #e07a5f22 0%, transparent 45%),
-                  var(--bg);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    header {
-      padding: 28px 20px 10px;
-      max-width: 1100px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    header h1 {
-      font-family: "Fraunces", serif;
-      font-size: clamp(1.8rem, 2.8vw, 2.8rem);
-      margin: 0;
-    }
-
-    header p {
-      margin: 0;
-      color: var(--muted);
-      max-width: 580px;
-    }
-
-    main {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 10px 20px 40px;
-      display: grid;
-      gap: 18px;
-    }
-
-    .week-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-      background: var(--card);
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-      position: sticky;
-      top: 12px;
-      z-index: 5;
-      backdrop-filter: blur(14px);
-    }
-
-    .week-title {
-      font-weight: 600;
-    }
-
-    .week-meta {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
-    .week-nav {
-      margin-left: auto;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      font-family: inherit;
-      border: none;
-      min-height: 44px;
-      padding: 10px 14px;
-      border-radius: 12px;
-      cursor: pointer;
-      background: var(--accent-2);
-      color: white;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      box-shadow: 0 6px 14px rgba(61,64,91,0.18);
-    }
-
-    button.secondary {
-      background: #ffffff;
-      color: var(--accent-2);
-      border: 1px solid #e4dfd5;
-      box-shadow: none;
-    }
-
-    button:active { transform: scale(0.98); }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .grid.secondary {
-      grid-template-columns: 1fr 1.3fr;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 18px;
-      box-shadow: var(--shadow);
-      align-self: start;
-    }
-
-    .card h2 {
-      margin: 0;
-      font-size: 1.25rem;
-    }
-
-    .card-head {
-      margin: -2px 0 12px;
-    }
-
-    .card-toggle {
-      width: 100%;
-      background: transparent;
-      border: none;
-      box-shadow: none;
-      padding: 0;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      text-align: left;
-    }
-
-    .card-toggle::after {
-      content: "−";
-      font-size: 1.4rem;
-      line-height: 1;
-      color: var(--muted);
-    }
-
-    .card-toggle.collapsed::after {
-      content: "+";
-    }
-
-    .card-body.hidden {
-      display: none;
-    }
-
-    .habit-list {
-      display: grid;
-      gap: 12px;
-    }
-
-    .habit-item {
-      border: 1px solid #eee4d7;
-      border-radius: 14px;
-      padding: 12px;
-      display: grid;
-      gap: 10px;
-      background: #fff;
-    }
-
-    .habit-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .habit-name {
-      font-weight: 600;
-    }
-
-    .habit-meta {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .habit-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .days {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(52px, 1fr));
-      gap: 6px;
-    }
-
-    .day-pill {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      background: #f9f4eb;
-      border-radius: 10px;
-      min-height: 72px;
-      padding: 8px 4px;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .day-pill input {
-      accent-color: var(--accent);
-      width: 20px;
-      height: 20px;
-    }
-
-    .weekly-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted);
-      min-height: 44px;
-    }
-
-    .cumulative-card {
-      display: grid;
-      gap: 10px;
-    }
-
-    .cumulative-summary {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .cumulative-total {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .quick-log {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .quick-log button {
-      padding: 8px 10px;
-      font-size: 0.85rem;
-    }
-
-    .minute-entry {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .minute-entry input[type="number"] {
-      max-width: 120px;
-    }
-
-    .entry-list {
-      display: grid;
-      gap: 6px;
-    }
-
-    .entry-item {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      background: #f9f4eb;
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 0.85rem;
-    }
-
-    .entry-meta {
-      color: var(--muted);
-    }
-
-    .form-row {
-      display: grid;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    input[type="text"], input[type="number"], select, textarea {
-      font-family: inherit;
-      border: 1px solid #e4dfd5;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 0.95rem;
-      background: white;
-    }
-
-    textarea { min-height: 130px; resize: vertical; }
-
-    .edit-panel {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 16px;
-      background: #fff;
-      border: 1px solid #eee4d7;
-      display: none;
-      gap: 10px;
-    }
-
-    .edit-panel.active {
-      display: grid;
-    }
-
-    .field-inline {
-      display: grid;
-      gap: 6px;
-    }
-
-    .field-inline label {
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    .mood-options {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .mood-option {
-      border: 1px solid #e4dfd5;
-      padding: 10px 14px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: #fff;
-      cursor: pointer;
-      min-height: 48px;
-    }
-
-    .mood-option input { accent-color: var(--accent); }
-
-    .badge {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #f4ece2;
-      color: var(--muted);
-    }
-
-    .stats-summary {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-
-    .stat-pill {
-      background: #fff;
-      border: 1px solid #eee4d7;
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 0.85rem;
-    }
-
-    .stats-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .stat-row {
-      display: grid;
-      gap: 6px;
-      background: #fff;
-      border-radius: 12px;
-      padding: 10px 12px;
-      border: 1px solid #eee4d7;
-    }
-
-    .stat-row .stat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      padding: 0;
-    }
-
-    .stat-bar {
-      height: 8px;
-      background: #f4ece2;
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .stat-bar span {
-      display: block;
-      height: 100%;
-      background: var(--accent);
-      border-radius: inherit;
-    }
-
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-
-    .filter-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .filter-chip {
-      border: 1px solid #eee4d7;
-      background: #fff;
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .filter-chip.active {
-      border-color: var(--accent-2);
-      color: var(--ink);
-      box-shadow: inset 0 0 0 1px var(--accent-2);
-    }
-
-    .calendar-nav {
-      display: flex;
-      gap: 6px;
-    }
-
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-    }
-
-    .calendar-day {
-      background: #fff;
-      border-radius: 10px;
-      min-height: 56px;
-      padding: 6px;
-      border: 1px solid #eee4d7;
-      display: grid;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .calendar-day.other {
-      opacity: 0.5;
-    }
-
-    .calendar-dots {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
-
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 12px;
-      margin-top: 10px;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .swatch {
-      width: 12px;
-      height: 12px;
-      border-radius: 4px;
-      background: var(--accent);
-    }
-
-    .file-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .scroll-row {
-      overflow-x: auto;
-      padding-bottom: 2px;
-      scrollbar-width: thin;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .good { color: var(--good); }
-    .bad { color: var(--bad); }
-    .normal { color: var(--normal); }
-
-    .empty {
-      color: var(--muted);
-      background: #fff;
-      border-radius: 12px;
-      padding: 14px;
-      border: 1px dashed #e4dfd5;
-    }
-
-    @media (max-width: 900px) {
-      .grid { grid-template-columns: 1fr; }
-      .grid.secondary { grid-template-columns: 1fr; }
-      .week-nav { margin-left: 0; }
-    }
-
-    @media (max-width: 640px) {
-      header {
-        padding: 20px 16px 8px;
-      }
-
-      main {
-        padding: 8px 16px calc(32px + env(safe-area-inset-bottom));
-        gap: 14px;
-      }
-
-      .week-bar {
-        top: 8px;
-        padding: 14px;
-        border-radius: 16px;
-      }
-
-      .week-nav {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        width: 100%;
-      }
-
-      .week-nav button {
-        width: 100%;
-        padding-inline: 8px;
-      }
-
-      .card {
-        padding: 14px;
-        border-radius: 18px;
-      }
-
-      input[type="text"], input[type="number"], select, textarea {
-        font-size: 16px;
-      }
-
-      .habit-item {
-        padding: 10px;
-      }
-
-      .habit-header {
-        align-items: flex-start;
-      }
-
-      .days {
-        grid-template-columns: repeat(7, minmax(56px, 56px));
-      }
-
-      .scroll-row {
-        margin-right: -2px;
-      }
-
-      .minute-entry {
-        display: grid;
-        grid-template-columns: 1fr auto;
-      }
-
-      .minute-entry input[type="number"] {
-        max-width: none;
-      }
-
-      .entry-item {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .entry-item button {
-        width: 100%;
-      }
-
-      .calendar-header {
-        align-items: stretch;
-      }
-
-      .calendar-nav {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .calendar {
-        gap: 4px;
-      }
-
-      .calendar-day {
-        min-height: 48px;
-        padding: 5px;
-        font-size: 0.74rem;
-      }
-
-      .file-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .file-row button {
-        width: 100%;
-      }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Weekly Habit Companion</h1>
-    <p>Track daily or weekly habits, reflect on your progress, and log your mood at the end of each week.</p>
-  </header>
-
-  <main>
-    <section class="week-bar">
-      <div>
-        <div class="week-title" id="weekTitle"></div>
-        <div class="badge" id="weekRange"></div>
-        <div class="week-meta" id="weekMeta"></div>
-      </div>
-      <div class="week-nav">
-        <button class="secondary" id="prevWeek">Previous</button>
-        <button id="thisWeek">Current Week</button>
-        <button class="secondary" id="nextWeek">Next</button>
-      </div>
-    </section>
-
-    <section class="grid">
-      <div class="card">
-        <div class="card-head">
-          <button class="card-toggle" type="button" data-card="habits">
-            <h2>Your Habits</h2>
-          </button>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#080b12" media="(prefers-color-scheme: dark)">
+    <meta name="application-name" content="Habits">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Habits">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Habits</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <script>
+      (() => {
+        try {
+          const saved = JSON.parse(localStorage.getItem("habits.v1") || "null");
+          const theme = saved?.settings?.theme || "dark";
+          if (theme === "dark" || theme === "light") document.documentElement.dataset.theme = theme;
+        } catch {
+          document.documentElement.dataset.theme = "dark";
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell" aria-label="Habit tracker">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow" id="current-date">Today</p>
+          <h1>Habits</h1>
         </div>
-        <div class="card-body" data-card-body="habits">
-          <div class="habit-list" id="habitList"></div>
-          <div class="form-row">
-            <button id="newHabit">Add Habit</button>
-            <div class="edit-panel" id="habitEditor">
-              <input type="text" id="habitName" placeholder="Habit name" />
-              <select id="habitFrequency">
-                <option value="daily">Daily tracking</option>
-                <option value="weekly">Weekly tracking</option>
-                <option value="cumulative">Cumulative weekly minutes</option>
-              </select>
-              <div class="field-inline">
-                <label for="habitTarget" id="habitTargetLabel">Weekly target</label>
-                <input type="number" id="habitTarget" min="1" step="1" />
-              </div>
-              <div class="field-inline">
-                <label for="habitColor">Habit color</label>
-                <input type="color" id="habitColor" />
-              </div>
-              <div class="habit-actions">
-                <button id="saveHabit">Save Habit</button>
-                <button class="secondary" id="cancelEdit">Cancel</button>
-                <button class="secondary" id="archiveHabitBtn" hidden>Archive</button>
-                <button class="secondary" id="deleteHabitBtn" hidden>Delete</button>
-              </div>
-            </div>
+        <button class="icon-action" id="install-button" type="button" hidden aria-label="Install app">
+          <span aria-hidden="true">+</span>
+        </button>
+      </header>
+
+      <aside class="file-warning" id="file-warning" hidden>
+        <strong>PWA preview is limited from a file.</strong>
+        <span>Install and offline caching need <a href="http://localhost:4174/">localhost</a> or HTTPS.</span>
+      </aside>
+
+      <aside class="offline-banner" id="offline-banner" hidden>
+        <strong>Offline mode</strong>
+        <span>Your saved habits are still available on this device.</span>
+      </aside>
+
+      <section class="screen active" id="today-screen" aria-labelledby="today-tab">
+        <article class="week-summary" aria-label="Weekly habit completion">
+          <div class="progress-orbit" id="week-orbit" role="img" aria-label="0 percent complete">
+            <span id="week-percent">0%</span>
           </div>
-        </div>
-      </div>
+          <div>
+            <p class="summary-label">Week score</p>
+            <h2 id="week-title">No habits yet</h2>
+            <p class="summary-copy" id="week-copy">Add a habit to start tracking your week.</p>
+          </div>
+        </article>
 
-      <div class="card">
-        <div class="card-head">
-          <button class="card-toggle" type="button" data-card="reflection">
-            <h2>Weekly Reflection</h2>
-          </button>
+        <div class="week-nav" aria-label="Tracker week controls">
+          <button class="ghost-button" id="prev-week" type="button" aria-label="Previous week">‹</button>
+          <div>
+            <strong id="tracker-week-label">This week</strong>
+          </div>
+          <button class="ghost-button" id="next-week" type="button" aria-label="Next week">›</button>
+          <button class="ghost-button" id="current-week" type="button">Today</button>
         </div>
-        <div class="card-body" data-card-body="reflection">
-          <label class="form-row">
-            <span class="habit-meta">How did this week feel overall?</span>
-            <div class="mood-options" id="moodOptions">
-              <label class="mood-option bad"><input type="radio" name="mood" value="bad" /> Bad</label>
-              <label class="mood-option normal"><input type="radio" name="mood" value="normal" /> Normal</label>
-              <label class="mood-option good"><input type="radio" name="mood" value="good" /> Good</label>
-            </div>
-          </label>
-          <label class="form-row">
-            <span class="habit-meta">Weekly journal</span>
-            <textarea id="journal" placeholder="Write a short reflection on how the week went..."></textarea>
-          </label>
-        </div>
-      </div>
-    </section>
 
-    <section class="grid secondary">
-      <div class="card">
-        <div class="card-head">
-          <button class="card-toggle" type="button" data-card="stats">
-            <h2>Weekly Stats</h2>
-          </button>
-        </div>
-        <div class="card-body" data-card-body="stats">
-          <div class="stats-summary" id="statsSummary"></div>
-          <div class="stats-list" id="statsList"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <button class="card-toggle" type="button" data-card="calendar">
-            <h2>Streaks & Calendar</h2>
-          </button>
-        </div>
-        <div class="card-body" data-card-body="calendar">
-          <div class="calendar-header">
+        <div class="week-strip" id="week-strip" aria-label="Current week"></div>
+
+        <article class="diary-card" aria-labelledby="diary-heading">
+          <div class="section-heading compact-heading">
             <div>
-              <div class="badge" id="calendarMonth"></div>
-              <div class="habit-meta">Dots show habit completions for this month.</div>
-            </div>
-            <div class="calendar-nav">
-              <button class="secondary" id="prevMonth">Prev Month</button>
-              <button class="secondary" id="nextMonth">Next Month</button>
+              <p class="section-kicker" id="diary-week-label">Selected week</p>
+              <h2 id="diary-heading">Weekly diary</h2>
             </div>
           </div>
-          <div class="filter-row" id="calendarFilters"></div>
-          <div class="calendar" id="calendar"></div>
-          <div class="legend" id="calendarLegend"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="grid">
-      <div class="card">
-        <div class="card-head">
-          <button class="card-toggle" type="button" data-card="data">
-            <h2>Data</h2>
-          </button>
-        </div>
-        <div class="card-body" data-card-body="data">
-          <div class="form-row">
-            <div class="file-row">
-              <button id="exportData">Export JSON</button>
-              <button class="secondary" id="exportCsv">Export CSV</button>
-              <button class="secondary" id="importBtn">Import JSON</button>
-              <button class="secondary" id="importCsvBtn">Import CSV</button>
-              <input type="file" id="importData" accept="application/json" hidden />
-              <input type="file" id="importCsv" accept=".csv,text/csv" hidden />
-            </div>
-            <span class="habit-meta">Export CSV for analysis. Importing replaces current data.</span>
+          <div class="mood-control" id="diary-mood" aria-label="Weekly mood">
+            <button type="button" data-mood="good">Good</button>
+            <button type="button" data-mood="neutral">Neutral</button>
+            <button type="button" data-mood="bad">Bad</button>
           </div>
+          <label class="field diary-field">
+            <span>Notes</span>
+            <textarea id="diary-note" rows="3" maxlength="360" placeholder="What stood out this week?"></textarea>
+          </label>
+        </article>
+
+        <section class="section-block" aria-labelledby="today-heading">
+          <div class="section-heading">
+            <h2 class="visually-hidden" id="today-heading">Tracker</h2>
+            <button class="primary-small" id="quick-add-button" type="button" aria-label="Add habit">+</button>
+          </div>
+          <div class="habit-list" id="habit-list"></div>
+        </section>
+      </section>
+
+      <section class="screen" id="calendar-screen" aria-labelledby="calendar-tab">
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Calendar</p>
+              <h2>Streaks</h2>
+            </div>
+          </div>
+          <div class="habit-picker" id="habit-picker" aria-label="Choose habit"></div>
+          <article class="streak-panel" id="streak-panel"></article>
+          <div class="calendar-card">
+            <div class="calendar-toolbar">
+              <button class="ghost-button" id="prev-month" type="button" aria-label="Previous month">‹</button>
+              <h3 id="calendar-title">Month</h3>
+              <button class="ghost-button" id="next-month" type="button" aria-label="Next month">›</button>
+            </div>
+            <div class="calendar-weekdays" aria-hidden="true">
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="screen" id="data-screen" aria-labelledby="data-tab">
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Local data</p>
+              <h2>Settings and data</h2>
+            </div>
+          </div>
+
+          <article class="data-card">
+            <h3>Appearance</h3>
+            <p>Dark is the default. Use system if you want the app to follow the device.</p>
+            <div class="segmented-control theme-control" id="theme-setting" aria-label="Appearance mode">
+              <button type="button" data-theme-mode="dark">Dark</button>
+              <button type="button" data-theme-mode="light">Light</button>
+              <button type="button" data-theme-mode="system">System</button>
+            </div>
+          </article>
+
+          <article class="data-card">
+            <h3>Week settings</h3>
+            <p>Choose how weeks line up in the tracker, calendar, and weekly target math.</p>
+            <div class="segmented-control" id="week-start-setting" aria-label="First day of week">
+              <button type="button" data-week-start="0">Sunday</button>
+              <button type="button" data-week-start="1">Monday</button>
+            </div>
+          </article>
+
+          <article class="data-card">
+            <h3>Backups</h3>
+            <p>JSON keeps everything exactly as-is. CSV is a portable habit log.</p>
+            <p id="backup-status" class="backup-status">Last JSON backup: never</p>
+            <div class="button-grid">
+              <button id="export-json" type="button">Export JSON</button>
+              <button id="export-csv" type="button">Export CSV</button>
+            </div>
+          </article>
+
+          <article class="data-card install-card">
+            <h3>Install on phone</h3>
+            <p>Use localhost or HTTPS first. On iPhone, open the share menu and choose Add to Home Screen. On Android, use Install app when the browser offers it.</p>
+          </article>
+
+          <article class="data-card">
+            <h3>Restore or import</h3>
+            <p>Files are checked before your current local data is changed.</p>
+            <label class="file-control">
+              <span>Import JSON backup</span>
+              <input id="import-json" type="file" accept="application/json,.json">
+            </label>
+            <label class="file-control">
+              <span>Import CSV log</span>
+              <input id="import-csv" type="file" accept=".csv,text/csv">
+            </label>
+          </article>
+
+          <article class="data-card danger-zone">
+            <h3>Fresh start</h3>
+            <p>Remove every habit and entry from this browser.</p>
+            <button id="clear-data" class="danger-button" type="button">Clear local data</button>
+          </article>
+        </section>
+      </section>
+
+      <nav class="bottom-nav" aria-label="Primary">
+        <button class="nav-tab active" id="today-tab" type="button" data-screen="today-screen">
+          <span aria-hidden="true">Today</span>
+        </button>
+        <button class="nav-tab" id="calendar-tab" type="button" data-screen="calendar-screen">
+          <span aria-hidden="true">Calendar</span>
+        </button>
+        <button class="nav-tab" id="data-tab" type="button" data-screen="data-screen">
+          <span aria-hidden="true">Data</span>
+        </button>
+      </nav>
+    </main>
+
+    <button class="floating-add" id="floating-add" type="button" aria-label="Add habit">+</button>
+
+    <dialog class="habit-dialog" id="habit-dialog">
+      <form method="dialog" class="habit-form" id="habit-form">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-heading">
+          <div>
+            <p class="section-kicker" id="habit-dialog-kicker">New habit</p>
+            <h2 id="habit-dialog-title">Add a habit</h2>
+          </div>
+          <button class="icon-action subtle" id="close-dialog" value="cancel" type="submit" formnovalidate aria-label="Close">x</button>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <button class="card-toggle" type="button" data-card="archived">
-            <h2>Archived Habits</h2>
-          </button>
+
+        <label class="field">
+          <span>Habit name</span>
+          <input id="habit-name" type="text" placeholder="Read 10+ pages per day" autocomplete="off" maxlength="80" required>
+        </label>
+
+        <fieldset class="type-field">
+          <legend>Tracking style</legend>
+          <label>
+            <input type="radio" name="habit-type" value="daily" checked>
+            <span>Daily checkoff</span>
+          </label>
+          <label>
+            <input type="radio" name="habit-type" value="weekly">
+            <span>Weekly checkoff</span>
+          </label>
+          <label>
+            <input type="radio" name="habit-type" value="minutes">
+            <span>Cumulative minutes</span>
+          </label>
+        </fieldset>
+        <p class="form-note" id="type-lock-note" hidden>Tracking style is locked after progress is logged.</p>
+
+        <label class="field target-field" id="target-field" hidden>
+          <span id="target-label">Weekly minute goal</span>
+          <input id="habit-target" type="number" min="1" step="1" inputmode="numeric" value="150">
+        </label>
+
+        <fieldset class="picker-field">
+          <legend>Icon</legend>
+          <div class="icon-picker" id="habit-icon-picker" aria-label="Habit icon"></div>
+        </fieldset>
+
+        <fieldset class="picker-field">
+          <legend>Color</legend>
+          <div class="color-picker" id="habit-color-picker" aria-label="Habit color"></div>
+        </fieldset>
+
+        <button class="primary-button" id="save-habit" type="submit" value="default">Save habit</button>
+      </form>
+    </dialog>
+
+    <dialog class="habit-dialog" id="edit-entry-dialog">
+      <form method="dialog" class="habit-form" id="edit-entry-form">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-heading">
+          <div>
+            <p class="section-kicker">Calendar edit</p>
+            <h2 id="edit-entry-title">Edit day</h2>
+          </div>
+          <button class="icon-action subtle" value="cancel" type="submit" formnovalidate aria-label="Close">x</button>
         </div>
-        <div class="card-body" data-card-body="archived">
-          <div class="habit-list" id="archivedList"></div>
+        <p class="sheet-copy" id="edit-entry-copy"></p>
+        <label class="field" id="edit-minutes-field">
+          <span>Minutes</span>
+          <input id="edit-minutes-input" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+        </label>
+        <button class="primary-button" id="edit-entry-save" type="submit" value="default">Save</button>
+      </form>
+    </dialog>
+
+    <dialog class="habit-dialog" id="confirm-dialog">
+      <form method="dialog" class="habit-form confirm-form" id="confirm-form">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div>
+          <p class="section-kicker" id="confirm-kicker">Confirm</p>
+          <h2 id="confirm-title">Are you sure?</h2>
         </div>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    const STORAGE_KEY = "weekly-habit-companion";
-    const UI_KEY = "weekly-habit-companion-ui";
-    const habitList = document.getElementById("habitList");
-    const habitNameInput = document.getElementById("habitName");
-    const habitFrequencySelect = document.getElementById("habitFrequency");
-    const habitTargetInput = document.getElementById("habitTarget");
-    const habitTargetLabel = document.getElementById("habitTargetLabel");
-    const habitColorInput = document.getElementById("habitColor");
-    const habitEditor = document.getElementById("habitEditor");
-    const newHabitBtn = document.getElementById("newHabit");
-    const saveHabitBtn = document.getElementById("saveHabit");
-    const cancelEditBtn = document.getElementById("cancelEdit");
-    const archiveHabitBtn = document.getElementById("archiveHabitBtn");
-    const deleteHabitBtn = document.getElementById("deleteHabitBtn");
-    const journalInput = document.getElementById("journal");
-    const moodOptions = document.getElementById("moodOptions");
-    const archivedList = document.getElementById("archivedList");
-    const statsSummary = document.getElementById("statsSummary");
-    const statsList = document.getElementById("statsList");
-    const weekMeta = document.getElementById("weekMeta");
-    const calendar = document.getElementById("calendar");
-    const calendarLegend = document.getElementById("calendarLegend");
-    const calendarMonthLabel = document.getElementById("calendarMonth");
-    const calendarFilters = document.getElementById("calendarFilters");
-    const exportDataBtn = document.getElementById("exportData");
-    const exportCsvBtn = document.getElementById("exportCsv");
-    const importBtn = document.getElementById("importBtn");
-    const importInput = document.getElementById("importData");
-    const importCsvBtn = document.getElementById("importCsvBtn");
-    const importCsvInput = document.getElementById("importCsv");
-    const cardToggleButtons = Array.from(document.querySelectorAll(".card-toggle"));
-
-    let state = loadState();
-    let uiState = loadUiState();
-    let currentWeekOffset = 0;
-    let calendarMonthOffset = 0;
-    let editingHabitId = null;
-    let calendarFiltersActive = new Set();
-    let lastDefaultTarget = 7;
-
-    const COLOR_PALETTE = [
-      "#e07a5f",
-      "#3d405b",
-      "#81b29a",
-      "#f2cc8f",
-      "#c8553d",
-      "#5f7a61",
-      "#7b6d8d",
-      "#f4a261"
-    ];
-
-    function loadState() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        return { habits: [], archivedHabits: [], weeks: {} };
-      }
-      try {
-        const parsed = JSON.parse(raw);
-        return {
-          habits: parsed.habits || [],
-          archivedHabits: parsed.archivedHabits || [],
-          weeks: parsed.weeks || {}
-        };
-      } catch {
-        return { habits: [], archivedHabits: [], weeks: {} };
-      }
-    }
-
-    function loadUiState() {
-      const raw = localStorage.getItem(UI_KEY);
-      if (!raw) {
-        return defaultUiState();
-      }
-      try {
-        const parsed = JSON.parse(raw);
-        return {
-          collapsedCards: parsed.collapsedCards || {}
-        };
-      } catch {
-        return defaultUiState();
-      }
-    }
-
-    function defaultUiState() {
-      if (window.innerWidth <= 640) {
-        return {
-          collapsedCards: {
-            stats: true,
-            archived: true,
-            data: true
-          }
-        };
-      }
-      return { collapsedCards: {} };
-    }
-
-    function ensureHabitColors() {
-      const all = [...state.habits, ...state.archivedHabits];
-      all.forEach((habit, index) => {
-        if (!habit.color) {
-          habit.color = COLOR_PALETTE[index % COLOR_PALETTE.length];
-        }
-      });
-      saveState();
-    }
-
-    ensureHabitColors();
-
-    resetForm();
-
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    function saveUiState() {
-      localStorage.setItem(UI_KEY, JSON.stringify(uiState));
-    }
-
-    function getNextColor() {
-      const used = state.habits.length + state.archivedHabits.length;
-      return COLOR_PALETTE[used % COLOR_PALETTE.length];
-    }
-
-    function getDefaultTarget(frequency) {
-      if (frequency === "cumulative") return 150;
-      return frequency === "daily" ? 7 : 1;
-    }
-
-    function getFrequencyLabel(frequency) {
-      if (frequency === "daily") return "Daily";
-      if (frequency === "cumulative") return "Cumulative";
-      return "Weekly";
-    }
-
-    function updateTargetLabel() {
-      habitTargetLabel.textContent = habitFrequencySelect.value === "cumulative"
-        ? "Weekly target (minutes)"
-        : "Weekly target";
-    }
-
-    function dateKey(date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    }
-
-    function startOfWeek(date) {
-      const day = (date.getDay() + 6) % 7; // Monday start
-      const start = new Date(date);
-      start.setDate(date.getDate() - day);
-      start.setHours(0, 0, 0, 0);
-      return start;
-    }
-
-    function getWeekKey(date) {
-      const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      const dayNum = temp.getUTCDay() || 7;
-      temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
-      const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
-      const weekNo = Math.ceil((((temp - yearStart) / 86400000) + 1) / 7);
-      return `${temp.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
-    }
-
-    function weekKeyToDate(key) {
-      const [yearPart, weekPart] = key.split("-W");
-      const year = Number(yearPart);
-      const week = Number(weekPart);
-      const jan4 = new Date(Date.UTC(year, 0, 4));
-      const jan4Day = jan4.getUTCDay() || 7;
-      const weekStart = new Date(jan4);
-      weekStart.setUTCDate(jan4.getUTCDate() - (jan4Day - 1) + (week - 1) * 7);
-      return new Date(weekStart.getUTCFullYear(), weekStart.getUTCMonth(), weekStart.getUTCDate());
-    }
-
-    function formatWeekRange(start) {
-      const end = new Date(start);
-      end.setDate(start.getDate() + 6);
-      const options = { month: "short", day: "numeric" };
-      return `${start.toLocaleDateString(undefined, options)} — ${end.toLocaleDateString(undefined, options)}`;
-    }
-
-    function getWeekDates(start) {
-      return Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(start);
-        d.setDate(start.getDate() + i);
-        return d;
-      });
-    }
-
-    function getPreferredLogDate(start) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const weekStart = new Date(start);
-      weekStart.setHours(0, 0, 0, 0);
-      const weekEnd = new Date(start);
-      weekEnd.setDate(start.getDate() + 6);
-      weekEnd.setHours(0, 0, 0, 0);
-
-      if (today >= weekStart && today <= weekEnd) {
-        return dateKey(today);
-      }
-      if (today < weekStart) {
-        return dateKey(weekStart);
-      }
-      return dateKey(weekEnd);
-    }
-
-    function weekData(key) {
-      if (!state.weeks[key]) {
-        state.weeks[key] = { journal: "", mood: "", tracking: {} };
-      }
-      return state.weeks[key];
-    }
-
-    function normalizeCumulativeEntries(value) {
-      if (!Array.isArray(value)) return [];
-      return value
-        .map(entry => ({
-          date: typeof entry?.date === "string" ? entry.date : "",
-          minutes: Math.max(1, Number(entry?.minutes) || 0)
-        }))
-        .filter(entry => entry.date && entry.minutes > 0);
-    }
-
-    function getHabitTracking(week, habit) {
-      const current = week.tracking[habit.id];
-      if (habit.frequency === "daily") {
-        if (!Array.isArray(current) || current.some(item => typeof item !== "boolean")) {
-          week.tracking[habit.id] = Array(7).fill(false);
-        }
-      } else if (habit.frequency === "cumulative") {
-        week.tracking[habit.id] = normalizeCumulativeEntries(current);
-      } else if (typeof current !== "boolean") {
-        week.tracking[habit.id] = false;
-      }
-      return week.tracking[habit.id];
-    }
-
-    function getHabitProgress(week, habit) {
-      const tracking = getHabitTracking(week, habit);
-      const target = Math.max(1, Number(habit.target) || getDefaultTarget(habit.frequency));
-      let done = 0;
-
-      if (habit.frequency === "daily") {
-        done = tracking.filter(Boolean).length;
-      } else if (habit.frequency === "cumulative") {
-        done = tracking.reduce((sum, entry) => sum + entry.minutes, 0);
-      } else {
-        done = tracking ? 1 : 0;
-      }
-
-      return {
-        done,
-        target,
-        percent: Math.round(Math.min(done / target, 1) * 100)
-      };
-    }
-
-    function downloadBlob(contents, filename, type) {
-      const blob = new Blob([contents], { type });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function escapeCsvValue(value) {
-      const stringValue = String(value ?? "");
-      if (!/[",\n]/.test(stringValue)) {
-        return stringValue;
-      }
-      return `"${stringValue.replace(/"/g, "\"\"")}"`;
-    }
-
-    function buildCsvExport() {
-      const habitsById = new Map(
-        [...state.habits, ...state.archivedHabits].map(habit => [habit.id, habit])
-      );
-      const rows = [[
-        "week_key",
-        "week_start",
-        "habit_id",
-        "habit_name",
-        "habit_frequency",
-        "habit_target",
-        "habit_status",
-        "entry_date",
-        "entry_value",
-        "entry_unit",
-        "week_total",
-        "week_completion_percent",
-        "mood",
-        "journal"
-      ]];
-
-      Object.keys(state.weeks)
-        .sort()
-        .forEach(weekKey => {
-          const week = weekData(weekKey);
-          const weekStart = dateKey(weekKeyToDate(weekKey));
-
-          habitsById.forEach(habit => {
-            const progress = getHabitProgress(week, habit);
-            const status = state.habits.some(activeHabit => activeHabit.id === habit.id) ? "active" : "archived";
-            const tracking = getHabitTracking(week, habit);
-
-            if (habit.frequency === "daily") {
-              tracking.forEach((checked, index) => {
-                if (!checked) return;
-                const entryDate = new Date(weekKeyToDate(weekKey));
-                entryDate.setDate(entryDate.getDate() + index);
-                rows.push([
-                  weekKey,
-                  weekStart,
-                  habit.id,
-                  habit.name,
-                  habit.frequency,
-                  progress.target,
-                  status,
-                  dateKey(entryDate),
-                  1,
-                  "check",
-                  progress.done,
-                  progress.percent,
-                  week.mood || "",
-                  week.journal || ""
-                ]);
-              });
-            } else if (habit.frequency === "cumulative") {
-              tracking.forEach(entry => {
-                rows.push([
-                  weekKey,
-                  weekStart,
-                  habit.id,
-                  habit.name,
-                  habit.frequency,
-                  progress.target,
-                  status,
-                  entry.date,
-                  entry.minutes,
-                  "minutes",
-                  progress.done,
-                  progress.percent,
-                  week.mood || "",
-                  week.journal || ""
-                ]);
-              });
-            } else if (tracking) {
-              rows.push([
-                weekKey,
-                weekStart,
-                habit.id,
-                habit.name,
-                habit.frequency,
-                progress.target,
-                status,
-                weekStart,
-                1,
-                "week",
-                progress.done,
-                progress.percent,
-                week.mood || "",
-                week.journal || ""
-              ]);
-            } else {
-              rows.push([
-                weekKey,
-                weekStart,
-                habit.id,
-                habit.name,
-                habit.frequency,
-                progress.target,
-                status,
-                "",
-                0,
-                habit.frequency === "cumulative" ? "minutes" : habit.frequency === "daily" ? "check" : "week",
-                progress.done,
-                progress.percent,
-                week.mood || "",
-                week.journal || ""
-              ]);
-            }
-          });
-        });
-
-      return rows.map(row => row.map(escapeCsvValue).join(",")).join("\n");
-    }
-
-    function parseCsv(text) {
-      const rows = [];
-      let row = [];
-      let value = "";
-      let inQuotes = false;
-
-      for (let i = 0; i < text.length; i += 1) {
-        const char = text[i];
-        const next = text[i + 1];
-
-        if (inQuotes) {
-          if (char === "\"" && next === "\"") {
-            value += "\"";
-            i += 1;
-          } else if (char === "\"") {
-            inQuotes = false;
-          } else {
-            value += char;
-          }
-          continue;
-        }
-
-        if (char === "\"") {
-          inQuotes = true;
-        } else if (char === ",") {
-          row.push(value);
-          value = "";
-        } else if (char === "\n") {
-          row.push(value);
-          rows.push(row);
-          row = [];
-          value = "";
-        } else if (char !== "\r") {
-          value += char;
-        }
-      }
-
-      if (value.length > 0 || row.length > 0) {
-        row.push(value);
-        rows.push(row);
-      }
-
-      return rows;
-    }
-
-    function buildStateFromCsv(text) {
-      const rows = parseCsv(text);
-      if (rows.length < 2) {
-        throw new Error("No data rows found.");
-      }
-
-      const header = rows[0];
-      const expected = [
-        "week_key",
-        "week_start",
-        "habit_id",
-        "habit_name",
-        "habit_frequency",
-        "habit_target",
-        "habit_status",
-        "entry_date",
-        "entry_value",
-        "entry_unit",
-        "week_total",
-        "week_completion_percent",
-        "mood",
-        "journal"
-      ];
-
-      if (header.length < expected.length || expected.some((name, index) => header[index] !== name)) {
-        throw new Error("CSV format not recognized.");
-      }
-
-      const nextState = { habits: [], archivedHabits: [], weeks: {} };
-      const habitsById = new Map();
-
-      rows.slice(1).forEach(columns => {
-        if (!columns.length || !columns[0]) return;
-        const record = Object.fromEntries(header.map((key, index) => [key, columns[index] ?? ""]));
-        const habitId = record.habit_id;
-        const frequency = record.habit_frequency;
-        const target = Math.max(1, parseInt(record.habit_target, 10) || getDefaultTarget(frequency));
-        const isArchived = record.habit_status === "archived";
-
-        if (!habitId || !record.week_key || !record.habit_name || !frequency) {
-          return;
-        }
-
-        if (!habitsById.has(habitId)) {
-          const habit = {
-            id: habitId,
-            name: record.habit_name,
-            frequency,
-            target
-          };
-          habitsById.set(habitId, habit);
-          if (isArchived) {
-            nextState.archivedHabits.push(habit);
-          } else {
-            nextState.habits.push(habit);
-          }
-        }
-
-        if (!nextState.weeks[record.week_key]) {
-          nextState.weeks[record.week_key] = { journal: "", mood: "", tracking: {} };
-        }
-
-        const week = nextState.weeks[record.week_key];
-        if (!week.journal && record.journal) week.journal = record.journal;
-        if (!week.mood && record.mood) week.mood = record.mood;
-
-        const habit = habitsById.get(habitId);
-        if (habit.frequency === "daily") {
-          if (!Array.isArray(week.tracking[habitId])) {
-            week.tracking[habitId] = Array(7).fill(false);
-          }
-          if (Number(record.entry_value) > 0 && record.entry_date) {
-            const diff = Math.round(
-              (new Date(`${record.entry_date}T00:00:00`) - new Date(`${record.week_start}T00:00:00`)) / 86400000
-            );
-            if (diff >= 0 && diff < 7) {
-              week.tracking[habitId][diff] = true;
-            }
-          }
-        } else if (habit.frequency === "cumulative") {
-          if (!Array.isArray(week.tracking[habitId])) {
-            week.tracking[habitId] = [];
-          }
-          if (Number(record.entry_value) > 0 && record.entry_date) {
-            week.tracking[habitId].push({
-              date: record.entry_date,
-              minutes: Math.max(1, Number(record.entry_value) || 0)
-            });
-          }
-        } else {
-          if (typeof week.tracking[habitId] !== "boolean") {
-            week.tracking[habitId] = false;
-          }
-          if (Number(record.entry_value) > 0) {
-            week.tracking[habitId] = true;
-          }
-        }
-      });
-
-      return nextState;
-    }
-
-    function applyCardCollapseState() {
-      cardToggleButtons.forEach(button => {
-        const cardId = button.dataset.card;
-        const body = document.querySelector(`[data-card-body="${cardId}"]`);
-        const collapsed = Boolean(uiState.collapsedCards[cardId]);
-        button.classList.toggle("collapsed", collapsed);
-        if (body) {
-          body.classList.toggle("hidden", collapsed);
-        }
-      });
-    }
-
-    function renderWeekHeader() {
-      const base = new Date();
-      base.setDate(base.getDate() + currentWeekOffset * 7);
-      const start = startOfWeek(base);
-      const key = getWeekKey(start);
-
-      document.getElementById("weekTitle").textContent = `Week ${key}`;
-      document.getElementById("weekRange").textContent = formatWeekRange(start);
-      renderWeekMeta(key);
-
-      renderHabits(start, key);
-      renderReflection(key);
-      renderArchivedHabits();
-      renderStats(start, key);
-      renderCalendar();
-    }
-
-    function renderHabits(start, key) {
-      habitList.innerHTML = "";
-      if (state.habits.length === 0) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "Start by adding a habit to track this week.";
-        habitList.appendChild(empty);
-        return;
-      }
-
-      const week = weekData(key);
-      const weekDates = getWeekDates(start);
-      const dayLabels = weekDates.map(d => d.toLocaleDateString(undefined, { weekday: "short" }));
-
-      state.habits.forEach(habit => {
-        const habitCard = document.createElement("div");
-        habitCard.className = "habit-item";
-
-        const header = document.createElement("div");
-        header.className = "habit-header";
-
-        const info = document.createElement("div");
-        const name = document.createElement("div");
-        name.className = "habit-name";
-        name.textContent = habit.name;
-        name.style.display = "flex";
-        name.style.alignItems = "center";
-        name.style.gap = "8px";
-        const colorDot = document.createElement("span");
-        colorDot.className = "swatch";
-        colorDot.style.background = habit.color || "var(--accent)";
-        name.prepend(colorDot);
-        const meta = document.createElement("div");
-        meta.className = "habit-meta";
-        meta.textContent = getFrequencyLabel(habit.frequency);
-        info.appendChild(name);
-        info.appendChild(meta);
-
-        const actions = document.createElement("div");
-        actions.className = "habit-actions";
-        const editBtn = document.createElement("button");
-        editBtn.className = "secondary";
-        editBtn.textContent = "Edit";
-        editBtn.addEventListener("click", () => startEditHabit(habit));
-        actions.appendChild(editBtn);
-
-        header.appendChild(info);
-        header.appendChild(actions);
-        habitCard.appendChild(header);
-
-        if (habit.frequency === "daily") {
-          const daysScroller = document.createElement("div");
-          daysScroller.className = "scroll-row";
-          const days = document.createElement("div");
-          days.className = "days";
-          const tracking = getHabitTracking(week, habit);
-
-          tracking.forEach((checked, index) => {
-            const day = document.createElement("label");
-            day.className = "day-pill";
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = checked;
-            checkbox.addEventListener("change", () => {
-              tracking[index] = checkbox.checked;
-              saveState();
-              renderWeekMeta(key);
-              renderStats(start, key);
-              renderCalendar();
-            });
-            const label = document.createElement("span");
-            label.textContent = dayLabels[index];
-            day.appendChild(checkbox);
-            day.appendChild(label);
-            days.appendChild(day);
-          });
-          daysScroller.appendChild(days);
-          habitCard.appendChild(daysScroller);
-        } else if (habit.frequency === "cumulative") {
-          const tracking = getHabitTracking(week, habit);
-          const progress = getHabitProgress(week, habit);
-          const logDate = getPreferredLogDate(start);
-
-          const wrapper = document.createElement("div");
-          wrapper.className = "cumulative-card";
-
-          const summary = document.createElement("div");
-          summary.className = "cumulative-summary";
-          const total = document.createElement("div");
-          total.className = "cumulative-total";
-          total.textContent = `${progress.done} / ${progress.target} min`;
-          const hint = document.createElement("div");
-          hint.className = "habit-meta";
-          hint.textContent = "Weekly cumulative target";
-          summary.appendChild(total);
-          summary.appendChild(hint);
-
-          const bar = document.createElement("div");
-          bar.className = "stat-bar";
-          const barFill = document.createElement("span");
-          barFill.style.width = `${progress.percent}%`;
-          barFill.style.background = habit.color || "var(--accent)";
-          bar.appendChild(barFill);
-
-          const quickLog = document.createElement("div");
-          quickLog.className = "quick-log";
-          [15, 30, 45].forEach(minutes => {
-            const button = document.createElement("button");
-            button.className = "secondary";
-            button.textContent = `+${minutes} min`;
-            button.addEventListener("click", () => {
-              tracking.push({ date: logDate, minutes });
-              saveState();
-              renderWeekHeader();
-            });
-            quickLog.appendChild(button);
-          });
-
-          const minuteEntry = document.createElement("div");
-          minuteEntry.className = "minute-entry";
-          const minuteInput = document.createElement("input");
-          minuteInput.type = "number";
-          minuteInput.min = "1";
-          minuteInput.step = "1";
-          minuteInput.placeholder = "Minutes";
-          const addMinutesBtn = document.createElement("button");
-          addMinutesBtn.textContent = "Log minutes";
-          addMinutesBtn.addEventListener("click", () => {
-            const minutes = Math.max(1, parseInt(minuteInput.value, 10) || 0);
-            if (!minutes) return;
-            tracking.push({ date: logDate, minutes });
-            saveState();
-            renderWeekHeader();
-          });
-          minuteEntry.appendChild(minuteInput);
-          minuteEntry.appendChild(addMinutesBtn);
-
-          const entries = document.createElement("div");
-          entries.className = "entry-list";
-          if (!tracking.length) {
-            const empty = document.createElement("div");
-            empty.className = "habit-meta";
-            empty.textContent = "No minutes logged this week.";
-            entries.appendChild(empty);
-          } else {
-            tracking.forEach((entry, index) => {
-              const row = document.createElement("div");
-              row.className = "entry-item";
-              const text = document.createElement("div");
-              const dateLabel = new Date(`${entry.date}T00:00:00`).toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric"
-              });
-              text.textContent = `${entry.minutes} min`;
-              const metaText = document.createElement("div");
-              metaText.className = "entry-meta";
-              metaText.textContent = dateLabel;
-              const left = document.createElement("div");
-              left.appendChild(text);
-              left.appendChild(metaText);
-              const removeBtn = document.createElement("button");
-              removeBtn.className = "secondary";
-              removeBtn.textContent = "Remove";
-              removeBtn.addEventListener("click", () => {
-                tracking.splice(index, 1);
-                saveState();
-                renderWeekHeader();
-              });
-              row.appendChild(left);
-              row.appendChild(removeBtn);
-              entries.appendChild(row);
-            });
-          }
-
-          wrapper.appendChild(summary);
-          wrapper.appendChild(bar);
-          wrapper.appendChild(quickLog);
-          wrapper.appendChild(minuteEntry);
-          wrapper.appendChild(entries);
-          habitCard.appendChild(wrapper);
-        } else {
-          const weekly = document.createElement("label");
-          weekly.className = "weekly-toggle";
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.checked = !!getHabitTracking(week, habit);
-          checkbox.addEventListener("change", () => {
-            week.tracking[habit.id] = checkbox.checked;
-            saveState();
-            renderWeekMeta(key);
-            renderStats(start, key);
-            renderCalendar();
-          });
-          const text = document.createElement("span");
-          text.textContent = "Completed this week";
-          weekly.appendChild(checkbox);
-          weekly.appendChild(text);
-          habitCard.appendChild(weekly);
-        }
-
-        habitList.appendChild(habitCard);
-      });
-
-      saveState();
-    }
-
-    function renderReflection(key) {
-      const week = weekData(key);
-      journalInput.value = week.journal || "";
-      const radios = moodOptions.querySelectorAll("input[name='mood']");
-      radios.forEach(radio => {
-        radio.checked = radio.value === week.mood;
-      });
-    }
-
-    function renderWeekMeta(key) {
-      weekMeta.innerHTML = "";
-      const week = weekData(key);
-      const activeHabits = state.habits.length;
-      const completedHabits = state.habits.filter(habit => {
-        const progress = getHabitProgress(week, habit);
-        return progress.done >= progress.target;
-      }).length;
-
-      const completion = document.createElement("div");
-      completion.className = "badge";
-      completion.textContent = `${completedHabits}/${activeHabits || 0} habits on target`;
-      weekMeta.appendChild(completion);
-
-      const mood = document.createElement("div");
-      mood.className = "badge";
-      mood.textContent = `Mood: ${week.mood || "Not set"}`;
-      weekMeta.appendChild(mood);
-    }
-
-    function renderArchivedHabits() {
-      archivedList.innerHTML = "";
-      if (!state.archivedHabits.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "No archived habits yet.";
-        archivedList.appendChild(empty);
-        return;
-      }
-      state.archivedHabits.forEach(habit => {
-        const row = document.createElement("div");
-        row.className = "habit-item";
-
-        const header = document.createElement("div");
-        header.className = "habit-header";
-
-        const info = document.createElement("div");
-        const name = document.createElement("div");
-        name.className = "habit-name";
-        name.style.display = "flex";
-        name.style.alignItems = "center";
-        name.style.gap = "8px";
-        const colorDot = document.createElement("span");
-        colorDot.className = "swatch";
-        colorDot.style.background = habit.color || "var(--accent)";
-        name.appendChild(colorDot);
-        name.appendChild(document.createTextNode(habit.name));
-        const meta = document.createElement("div");
-        meta.className = "habit-meta";
-        meta.textContent = getFrequencyLabel(habit.frequency);
-        info.appendChild(name);
-        info.appendChild(meta);
-
-        const actions = document.createElement("div");
-        actions.className = "habit-actions";
-        const restoreBtn = document.createElement("button");
-        restoreBtn.className = "secondary";
-        restoreBtn.textContent = "Restore";
-        restoreBtn.addEventListener("click", () => restoreHabit(habit.id));
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "secondary";
-        deleteBtn.textContent = "Delete";
-        deleteBtn.addEventListener("click", () => deleteHabit(habit.id, true));
-        actions.appendChild(restoreBtn);
-        actions.appendChild(deleteBtn);
-
-        header.appendChild(info);
-        header.appendChild(actions);
-        row.appendChild(header);
-        archivedList.appendChild(row);
-      });
-    }
-
-    function resetForm() {
-      habitNameInput.value = "";
-      habitFrequencySelect.value = "daily";
-      habitTargetInput.value = String(getDefaultTarget("daily"));
-      habitColorInput.value = getNextColor();
-      lastDefaultTarget = getDefaultTarget("daily");
-      editingHabitId = null;
-      saveHabitBtn.textContent = "Save Habit";
-      archiveHabitBtn.hidden = true;
-      deleteHabitBtn.hidden = true;
-      habitEditor.classList.remove("active");
-      updateTargetLabel();
-    }
-
-    function startEditHabit(habit) {
-      editingHabitId = habit.id;
-      habitNameInput.value = habit.name;
-      habitFrequencySelect.value = habit.frequency;
-      habitTargetInput.value = habit.target || getDefaultTarget(habit.frequency);
-      habitColorInput.value = habit.color || getNextColor();
-      saveHabitBtn.textContent = "Update Habit";
-      archiveHabitBtn.hidden = false;
-      deleteHabitBtn.hidden = false;
-      habitEditor.classList.add("active");
-      updateTargetLabel();
-      habitNameInput.focus();
-    }
-
-    function archiveHabit(habitId) {
-      const index = state.habits.findIndex(h => h.id === habitId);
-      if (index === -1) return;
-      const [habit] = state.habits.splice(index, 1);
-      state.archivedHabits.unshift(habit);
-      if (editingHabitId === habitId) resetForm();
-      saveState();
-      renderWeekHeader();
-    }
-
-    function restoreHabit(habitId) {
-      const index = state.archivedHabits.findIndex(h => h.id === habitId);
-      if (index === -1) return;
-      const [habit] = state.archivedHabits.splice(index, 1);
-      state.habits.unshift(habit);
-      saveState();
-      renderWeekHeader();
-    }
-
-    function deleteHabit(habitId, fromArchive = false) {
-      const confirmDelete = window.confirm("Delete this habit permanently? This cannot be undone.");
-      if (!confirmDelete) return;
-      if (fromArchive) {
-        state.archivedHabits = state.archivedHabits.filter(h => h.id !== habitId);
-      } else {
-        state.habits = state.habits.filter(h => h.id !== habitId);
-      }
-      Object.values(state.weeks).forEach(week => {
-        if (week.tracking && week.tracking[habitId] !== undefined) {
-          delete week.tracking[habitId];
-        }
-      });
-      if (editingHabitId === habitId) resetForm();
-      saveState();
-      renderWeekHeader();
-    }
-
-    function buildCompletionSet(habit) {
-      const completedDates = new Set();
-      const completedWeeks = new Set();
-      Object.keys(state.weeks).forEach(key => {
-        const week = state.weeks[key];
-        if (!week || !week.tracking) return;
-        if (habit.frequency === "daily") {
-          const tracking = getHabitTracking(week, habit);
-          const start = weekKeyToDate(key);
-          tracking.forEach((done, index) => {
-            if (done) {
-              const date = new Date(start);
-              date.setDate(start.getDate() + index);
-              completedDates.add(dateKey(date));
-            }
-          });
-        } else if (habit.frequency === "cumulative") {
-          const tracking = getHabitTracking(week, habit);
-          const total = tracking.reduce((sum, entry) => sum + entry.minutes, 0);
-          tracking.forEach(entry => {
-            completedDates.add(entry.date);
-          });
-          if (total >= Math.max(1, Number(habit.target) || getDefaultTarget("cumulative"))) {
-            completedWeeks.add(key);
-          }
-        } else if (getHabitTracking(week, habit)) {
-          completedWeeks.add(key);
-        }
-      });
-      return { completedDates, completedWeeks };
-    }
-
-    function calculateStreaks(habit) {
-      if (habit.frequency === "weekly" || habit.frequency === "cumulative") {
-        const completedWeeks = Array.from(buildCompletionSet(habit).completedWeeks)
-          .map(key => weekKeyToDate(key))
-          .sort((a, b) => a - b);
-
-        const currentWeekKey = getCurrentWeekKey();
-        let currentStreak = 0;
-        let cursor = weekKeyToDate(currentWeekKey);
-        while (completedWeeks.some(d => d.getTime() === cursor.getTime())) {
-          currentStreak += 1;
-          cursor.setDate(cursor.getDate() - 7);
-        }
-
-        let bestStreak = 0;
-        let tempStreak = 0;
-        completedWeeks.forEach((date, idx) => {
-          if (idx === 0) {
-            tempStreak = 1;
-          } else {
-            const prev = completedWeeks[idx - 1];
-            if ((date - prev) / 86400000 === 7) {
-              tempStreak += 1;
-            } else {
-              tempStreak = 1;
-            }
-          }
-          bestStreak = Math.max(bestStreak, tempStreak);
-        });
-
-        return { current: currentStreak, best: bestStreak };
-      }
-
-      const completedDates = Array.from(buildCompletionSet(habit).completedDates)
-        .map(date => new Date(date))
-        .sort((a, b) => a - b);
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      let currentStreak = 0;
-      let cursor = new Date(today);
-      const completedSet = new Set(completedDates.map(d => dateKey(d)));
-      while (completedSet.has(dateKey(cursor))) {
-        currentStreak += 1;
-        cursor.setDate(cursor.getDate() - 1);
-      }
-
-      let bestStreak = 0;
-      let tempStreak = 0;
-      completedDates.forEach((date, idx) => {
-        if (idx === 0) {
-          tempStreak = 1;
-        } else {
-          const prev = completedDates[idx - 1];
-          if ((date - prev) / 86400000 === 1) {
-            tempStreak += 1;
-          } else {
-            tempStreak = 1;
-          }
-        }
-        bestStreak = Math.max(bestStreak, tempStreak);
-      });
-
-      return { current: currentStreak, best: bestStreak };
-    }
-
-    function renderStats(start, key) {
-      statsSummary.innerHTML = "";
-      statsList.innerHTML = "";
-      if (!state.habits.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "Add habits to see weekly stats and streaks.";
-        statsList.appendChild(empty);
-        return;
-      }
-
-      const week = weekData(key);
-      let totalScore = 0;
-      let totalPossible = 0;
-
-      state.habits.forEach(habit => {
-        const progress = getHabitProgress(week, habit);
-        totalScore += Math.min(progress.done, progress.target);
-        totalPossible += progress.target;
-        const streaks = calculateStreaks(habit);
-
-        const row = document.createElement("div");
-        row.className = "stat-row";
-        const header = document.createElement("div");
-        header.className = "stat-header";
-        const name = document.createElement("div");
-        name.textContent = habit.name;
-        const meta = document.createElement("div");
-        meta.className = "habit-meta";
-        const suffix = habit.frequency === "cumulative"
-          ? ` • ${progress.done}/${progress.target} min`
-          : "";
-        meta.textContent = `${progress.percent}% • ${streaks.current} current / ${streaks.best} best${suffix}`;
-        header.appendChild(name);
-        header.appendChild(meta);
-
-        const bar = document.createElement("div");
-        bar.className = "stat-bar";
-        const barFill = document.createElement("span");
-        barFill.style.width = `${progress.percent}%`;
-        barFill.style.background = habit.color || "var(--accent)";
-        bar.appendChild(barFill);
-
-        row.appendChild(header);
-        row.appendChild(bar);
-        statsList.appendChild(row);
-      });
-
-      const overall = Math.round((totalScore / totalPossible) * 100);
-      const summary = document.createElement("div");
-      summary.className = "stat-pill";
-      summary.textContent = `Overall completion: ${overall}%`;
-      statsSummary.appendChild(summary);
-
-      const weekLabel = document.createElement("div");
-      weekLabel.className = "stat-pill";
-      weekLabel.textContent = `Week of ${formatWeekRange(start)}`;
-      statsSummary.appendChild(weekLabel);
-    }
-
-    function renderCalendar() {
-      calendar.innerHTML = "";
-      calendarLegend.innerHTML = "";
-      calendarFilters.innerHTML = "";
-
-      if (!state.habits.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = "Add habits to see the calendar view.";
-        calendar.appendChild(empty);
-        return;
-      }
-
-      const allChip = document.createElement("button");
-      const allActive = calendarFiltersActive.size === 0;
-      allChip.className = `filter-chip ${allActive ? "active" : ""}`;
-      allChip.type = "button";
-      allChip.textContent = "All habits";
-      allChip.addEventListener("click", () => {
-        calendarFiltersActive = new Set();
-        renderCalendar();
-      });
-      calendarFilters.appendChild(allChip);
-
-      state.habits.forEach(habit => {
-        const chip = document.createElement("button");
-        const isActive = calendarFiltersActive.has(habit.id);
-        chip.className = `filter-chip ${isActive ? "active" : ""}`;
-        chip.type = "button";
-        const swatch = document.createElement("span");
-        swatch.className = "swatch";
-        swatch.style.background = habit.color || "var(--accent)";
-        const label = document.createElement("span");
-        label.textContent = habit.name;
-        chip.appendChild(swatch);
-        chip.appendChild(label);
-        chip.addEventListener("click", () => {
-          if (calendarFiltersActive.has(habit.id)) {
-            calendarFiltersActive.delete(habit.id);
-          } else {
-            calendarFiltersActive.add(habit.id);
-          }
-          renderCalendar();
-        });
-        calendarFilters.appendChild(chip);
-      });
-
-      const base = new Date();
-      base.setDate(1);
-      base.setMonth(base.getMonth() + calendarMonthOffset);
-      const month = base.getMonth();
-      const year = base.getFullYear();
-      calendarMonthLabel.textContent = base.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-
-      const monthStart = new Date(year, month, 1);
-      const startOffset = (monthStart.getDay() + 6) % 7;
-      const gridStart = new Date(monthStart);
-      gridStart.setDate(monthStart.getDate() - startOffset);
-
-      const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      dayNames.forEach(name => {
-        const header = document.createElement("div");
-        header.className = "calendar-day";
-        header.style.fontWeight = "600";
-        header.style.background = "transparent";
-        header.style.border = "none";
-        header.textContent = name;
-        calendar.appendChild(header);
-      });
-
-      const habitCompletions = new Map();
-      const habitsToRender = calendarFiltersActive.size === 0
-        ? state.habits
-        : state.habits.filter(habit => calendarFiltersActive.has(habit.id));
-
-      habitsToRender.forEach(habit => {
-        habitCompletions.set(habit.id, buildCompletionSet(habit));
-      });
-
-      for (let i = 0; i < 42; i += 1) {
-        const date = new Date(gridStart);
-        date.setDate(gridStart.getDate() + i);
-        const cell = document.createElement("div");
-        cell.className = "calendar-day";
-        if (date.getMonth() !== month) cell.classList.add("other");
-
-        const label = document.createElement("div");
-        label.textContent = date.getDate();
-
-        const dots = document.createElement("div");
-        dots.className = "calendar-dots";
-
-        habitsToRender.forEach(habit => {
-          const completion = habitCompletions.get(habit.id);
-          if (!completion) return;
-          let isDone = false;
-          if (habit.frequency === "daily" || habit.frequency === "cumulative") {
-            isDone = completion.completedDates.has(dateKey(date));
-          } else {
-            const weekKey = getWeekKey(startOfWeek(date));
-            const weekStart = startOfWeek(date);
-            isDone = completion.completedWeeks.has(weekKey) && dateKey(weekStart) === dateKey(date);
-          }
-          if (isDone) {
-            const dot = document.createElement("span");
-            dot.className = "dot";
-            dot.style.background = habit.color || "var(--accent)";
-            dots.appendChild(dot);
-          }
-        });
-
-        cell.appendChild(label);
-        cell.appendChild(dots);
-        calendar.appendChild(cell);
-      }
-
-      habitsToRender.forEach(habit => {
-        const item = document.createElement("div");
-        item.className = "legend-item";
-        const swatch = document.createElement("span");
-        swatch.className = "swatch";
-        swatch.style.background = habit.color || "var(--accent)";
-        const text = document.createElement("span");
-        text.textContent = habit.name;
-        item.appendChild(swatch);
-        item.appendChild(text);
-        calendarLegend.appendChild(item);
-      });
-    }
-
-    saveHabitBtn.addEventListener("click", () => {
-      const name = habitNameInput.value.trim();
-      if (!name) return;
-      const frequency = habitFrequencySelect.value;
-      const target = Math.max(1, parseInt(habitTargetInput.value, 10) || getDefaultTarget(frequency));
-      const color = habitColorInput.value || getNextColor();
-
-      if (editingHabitId) {
-        const habit = state.habits.find(h => h.id === editingHabitId);
-        if (habit) {
-          habit.name = name;
-          habit.frequency = frequency;
-          habit.target = target;
-          habit.color = color;
-        }
-      } else {
-        state.habits.push({
-          id: `habit-${Date.now()}`,
-          name,
-          frequency,
-          target,
-          color
-        });
-      }
-
-      saveState();
-      resetForm();
-      renderWeekHeader();
-    });
-
-    cancelEditBtn.addEventListener("click", () => {
-      resetForm();
-    });
-
-    newHabitBtn.addEventListener("click", () => {
-      resetForm();
-      habitEditor.classList.add("active");
-      habitNameInput.focus();
-    });
-
-    archiveHabitBtn.addEventListener("click", () => {
-      if (!editingHabitId) return;
-      archiveHabit(editingHabitId);
-    });
-
-    deleteHabitBtn.addEventListener("click", () => {
-      if (!editingHabitId) return;
-      deleteHabit(editingHabitId);
-    });
-
-    habitFrequencySelect.addEventListener("change", () => {
-      updateTargetLabel();
-      if (editingHabitId) return;
-      const newDefault = getDefaultTarget(habitFrequencySelect.value);
-      if (habitTargetInput.value === String(lastDefaultTarget)) {
-        habitTargetInput.value = String(newDefault);
-      }
-      lastDefaultTarget = newDefault;
-    });
-
-    journalInput.addEventListener("input", () => {
-      const key = getCurrentWeekKey();
-      const week = weekData(key);
-      week.journal = journalInput.value;
-      saveState();
-    });
-
-    moodOptions.addEventListener("change", (event) => {
-      if (event.target.name !== "mood") return;
-      const key = getCurrentWeekKey();
-      const week = weekData(key);
-      week.mood = event.target.value;
-      saveState();
-      renderWeekMeta(key);
-    });
-
-    exportDataBtn.addEventListener("click", () => {
-      const data = JSON.stringify(state, null, 2);
-      downloadBlob(data, "weekly-habit-companion.json", "application/json");
-    });
-
-    exportCsvBtn.addEventListener("click", () => {
-      const csv = buildCsvExport();
-      downloadBlob(csv, "weekly-habit-companion.csv", "text/csv;charset=utf-8");
-    });
-
-    importBtn.addEventListener("click", () => {
-      importInput.click();
-    });
-
-    importCsvBtn.addEventListener("click", () => {
-      importCsvInput.click();
-    });
-
-    importInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const parsed = JSON.parse(reader.result);
-          const confirmImport = window.confirm("Importing will replace your current data. Continue?");
-          if (!confirmImport) return;
-          state = {
-            habits: parsed.habits || [],
-            archivedHabits: parsed.archivedHabits || [],
-            weeks: parsed.weeks || {}
-          };
-          ensureHabitColors();
-          saveState();
-          renderWeekHeader();
-        } catch {
-          window.alert("That file does not look like valid habit data.");
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = "";
-    });
-
-    importCsvInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const confirmImport = window.confirm("Importing CSV will replace your current data. Continue?");
-          if (!confirmImport) return;
-          state = buildStateFromCsv(String(reader.result || ""));
-          ensureHabitColors();
-          saveState();
-          resetForm();
-          renderWeekHeader();
-        } catch {
-          window.alert("That CSV does not match the app's export format.");
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = "";
-    });
-
-    function getCurrentWeekKey() {
-      const base = new Date();
-      base.setDate(base.getDate() + currentWeekOffset * 7);
-      return getWeekKey(startOfWeek(base));
-    }
-
-    document.getElementById("prevMonth").addEventListener("click", () => {
-      calendarMonthOffset -= 1;
-      renderCalendar();
-    });
-
-    document.getElementById("nextMonth").addEventListener("click", () => {
-      calendarMonthOffset += 1;
-      renderCalendar();
-    });
-
-    document.getElementById("prevWeek").addEventListener("click", () => {
-      currentWeekOffset -= 1;
-      renderWeekHeader();
-    });
-
-    document.getElementById("nextWeek").addEventListener("click", () => {
-      currentWeekOffset += 1;
-      renderWeekHeader();
-    });
-
-    document.getElementById("thisWeek").addEventListener("click", () => {
-      currentWeekOffset = 0;
-      renderWeekHeader();
-    });
-
-    cardToggleButtons.forEach(button => {
-      button.addEventListener("click", () => {
-        const cardId = button.dataset.card;
-        uiState.collapsedCards[cardId] = !uiState.collapsedCards[cardId];
-        saveUiState();
-        applyCardCollapseState();
-      });
-    });
-
-    applyCardCollapseState();
-    renderWeekHeader();
-  </script>
-</body>
+        <p class="sheet-copy" id="confirm-copy"></p>
+        <div class="dialog-actions">
+          <button class="ghost-button" type="submit" value="cancel" formnovalidate>Cancel</button>
+          <button class="danger-button" id="confirm-action" type="submit" value="confirm">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="app.js" defer></script>
+  </body>
 </html>
