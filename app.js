@@ -70,6 +70,7 @@ let toastTimer = null;
 let diaryTimer = null;
 let pendingConfirmation = null;
 let pendingEdit = null;
+let sawOfflineEvent = false;
 
 document.addEventListener("DOMContentLoaded", () => {
   cacheElements();
@@ -219,8 +220,14 @@ function bindEvents() {
     installPrompt = null;
     els.installButton.hidden = true;
   });
-  window.addEventListener("online", renderConnectionStatus);
-  window.addEventListener("offline", renderConnectionStatus);
+  window.addEventListener("online", () => {
+    sawOfflineEvent = false;
+    renderConnectionStatus();
+  });
+  window.addEventListener("offline", () => {
+    sawOfflineEvent = true;
+    renderConnectionStatus();
+  });
   window.addEventListener("appinstalled", () => toast("Habits installed for offline use."));
 }
 
@@ -491,7 +498,7 @@ function renderFileWarning() {
 }
 
 function renderConnectionStatus() {
-  els.offlineBanner.hidden = navigator.onLine !== false;
+  els.offlineBanner.hidden = !sawOfflineEvent;
 }
 
 function renderWeekdayLabels() {
